@@ -1,0 +1,11 @@
+.active {
+    @apply my-2 bg-red-500 px-4 text-white w-full flex justify-center items-center gap-x-2 py-2 rounded-lg duration-100 ease-in-out
+}
+
+.inactive {
+    @apply my-2 text-red-500 px-4 w-full flex justify-center items-center gap-x-2 py-2 rounded-lg hover:bg-red-400 hover:text-white duration-150 ease-in-out
+}
+
+.slideBar {
+    transition: width 2s ease-in-out;
+}

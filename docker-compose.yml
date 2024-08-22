@@ -1,0 +1,155 @@
+# เวอร์ชั่น docker compose ที่ใช้ในการ build
+version: '3.8'
+
+# service ที่ทั้งหมดที่ใช้
+services:
+
+  # pg database
+  postgreSql:
+    # เมื่อ container มีการเปลียนแปลงให้ restart ตลอด
+    restart: always
+    # os ที่ต้องการใช้ใน container
+    platform: linux/x86_64
+    # ชื่อ container
+    container_name: locker-postgresdb
+    # iamge ที่ใช้ image สามารถดูจาก docker hub ได้
+    image: postgres:latest
+    # การ map port ระหว่าง container กับ public port ex -> public:contailner
+    ports:
+      - 5432:5432
+    # การ map volumes ระหว่าง container กับ project ex -> porject path:contailner path
+    # ประโยชน์ เมื่อมีการเปลี่ยน code ใน path ของ project ใน container จะเปลียนตามไปด้วย
+    volumes:
+      - .docker/postgreSql:/var/lib/postgresql/data
+    # env ของ pg database
+    environment:
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=root
+      - POSTGRES_DB=LockerDB
+    # การ set network ให้ container
+    networks:
+      - backend
+    # การทำ condition ว่า image ว่า service สามารถทำงานได้
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # redis server
+  redis:
+    # เมื่อ container มีการเปลียนแปลงให้ restart ตลอด
+    restart: always
+    # os ที่ต้องการใช้ใน container
+    platform: linux/x86_64
+    # iamge ที่ใช้ image สามารถดูจาก docker hub ได้
+    image: redis:latest
+    # ชื่อ container
+    container_name: locker-redisServer
+    # การ map port ระหว่าง container กับ public port ex -> public:contailner
+    ports:
+      - 6379:6379
+    # การ map volumes ระหว่าง container กับ project ex -> porject path:contailner path
+    # ประโยชน์ เมื่อมีการเปลี่ยน code ใน path ของ project ใน container จะเปลียนตามไปด้วย
+    volumes:
+      - .docker/redis:/db
+    # การ set network ให้ container
+    networks:
+      - backend
+    # การทำ condition ว่า image ว่า service สามารถทำงานได้
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+  # redis gui
+  redis_insight:
+    # os ที่ต้องการใช้ใน container
+    platform: linux/x86_64
+    # iamge ที่ใช้ image สามารถดูจาก docker hub ได้
+    image: redislabs/redisinsight:1.14.0
+    # ชื่อ container
+    container_name: redis_insight
+    # เมื่อ container มีการเปลียนแปลงให้ restart ตลอด
+    restart: always
+    # การ map port ระหว่าง container กับ public port ex -> public:contailner
+    ports:
+      - 8001:8001
+    # การ map volumes ระหว่าง container กับ project ex -> porject path:contailner path
+    # ประโยชน์ เมื่อมีการเปลี่ยน code ใน path ของ project ใน container จะเปลียนตามไปด้วย
+    volumes:
+      - .docker/redisinsight:/db
+    # การ set network ให้ container
+    networks:
+      - backend
+    # depends_on คือการทำให้ 2 service ใช้งานร่วมกันได้
+    depends_on:
+      - redis
+
+  # frontend container
+  frontend:
+    restart: always
+    platform: linux/x86_64
+    container_name: locker-frontend
+    build: ./frontend
+    ports:
+      - '4000:4000'
+    # run คำสั่งที่ต้องการ
+    command: npm run dev
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json
+    # การ map volumes ระหว่าง container กับ project ex -> porject path:contailner path
+    # ประโยชน์ เมื่อมีการเปลี่ยน code ใน path ของ project ใน container จะเปลียนตามไปด้วย
+    volumes:
+      - ./frontend/:/app
+      - /app/node_modules
+    networks:
+      - backend
+
+  backend:
+    restart: always
+    platform: linux/x86_64
+    container_name: locker-backend
+    build: ./backend
+    ports:
+      - '3000:3000'
+    command: npm run dev
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json
+    # การ map volumes ระหว่าง container กับ project ex -> porject path:contailner path
+    # ประโยชน์ เมื่อมีการเปลี่ยน code ใน path ของ project ใน container จะเปลียนตามไปด้วย
+    volumes:
+      - ./backend/:/app
+      - /app/node_modules
+    # การ set env ของ node
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - backend
+    # depends_on คือการทำให้ 2 service ใช้งานร่วมกันได้
+    depends_on:
+      postgreSql:
+        # การตรวจเงื่อนไขว่า service นี้สามารถใช้งานได้ถึง service backed จะทำงาน
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+networks:
+  backend:
+    driver: bridge

@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-100;
+}
+
+@font-face  {
+  font-family: "regular";
+  src: local("Prompt-Regular"),
+  url('./assets/font/Prompt/Prompt-Regular.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "medium";
+  src: local("Prompt-Medium"),
+  url('./assets/font/Prompt/Prompt-Medium.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "semibold";
+  src: local("Prompt-SemiBold"),
+  url('./assets/font/Prompt/Prompt-SemiBold.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "bold";
+  src: local("Prompt-Bold"),
+  url('./assets/font/Prompt/Prompt-Bold.ttf') format("truetype");
+}

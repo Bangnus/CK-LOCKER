@@ -1,0 +1,259 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// sql server connect
+// datasource db {
+//   provider = "sqlserver"
+//   url      = env("DATABASE_URL")
+// }
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id            Int      @id @default(autoincrement())
+  name          String?
+  username      String?
+  email         String?
+  password      String?
+  passwordToken String?
+  user_zone     Int?
+  user_branch   Int?
+  role          roles? @relation(fields: [user_role], references: [id])
+  apikey        apikeys[]
+  bookmarks     lockerbookmarks[]
+  user_role     Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model roles {
+  id          Int      @id @default(autoincrement())
+  name_th     String?
+  name_eng    String?
+  users       users[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DataCus {
+  id Int @id @default(autoincrement())
+  CusIdCk Int?
+  PrefixName String?
+  fristName_TH String?
+  lastName_TH String?
+  fristName_EN String?
+  lastName_EN String?
+  address String?
+  province String?
+  amphur String?
+  district String?
+  zipcode String?
+  CardId String?
+  Phone_Cus String?
+  Line_Cus String?
+  Facebook_Cus String?
+  CONT CotractsLocker[]
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CotractsLocker {
+  id Int @id @default(autoincrement())
+  CONTNO String? @unique
+  CINTNOCK String?
+  CUSTOMER DataCus? @relation(fields: [CUSNO], references: [id])
+  CUSNO Int?
+  CodeLoan Int?
+  NameLoan String?
+  DocStatus DocStatus? @relation(fields: [DocST], references: [id])
+  DocST Int?
+  UserZone Int?
+  UserBranch Int?
+  FloorCont LockerContracts[]
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lockers {
+  id Int @id @default(autoincrement())
+  LockerName String?
+  FloorQutity Int?
+  LimitDoc Float?
+  Lockerfloor LockerFloors[]
+  LocFloorActive active @default(yes)
+  LockerColorCode String?
+  LockerColors colors? @relation(fields: [LockerColorId], references: [id])
+  bookmarks lockerbookmarks[]
+  Protype producttypes? @relation(fields: [ProtypeNo], references: [id])
+  ProtypeNo Int?
+  LockerColorId Int?
+  LockerZone Int?
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LockerFloors {
+  id Int @id @default(autoincrement())
+  Locker Lockers? @relation(fields: [LockerNo], references: [id])
+  LockerNo Int?
+  FloorNo Int?
+  FloorQutity Int?
+  LocFloorActive active @default(yes)
+  LockerCont LockerContracts[]
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LockerContracts {
+  id Int @id @default(autoincrement())
+  CONT CotractsLocker? @relation(fields: [CONTNO], references: [CONTNO])
+  CONTNO String?
+  LocFloor LockerFloors? @relation(fields: [LocFloorId], references: [id])
+  LocFloorId Int?
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model lockerbookmarks {
+  id Int @id @default(autoincrement())
+  Locker Lockers? @relation(fields: [LockerId], references: [id])
+  LockerId Int?
+  User users? @relation(fields: [UserBook], references: [id])
+  UserBook Int?
+  bookmarkActive bookActive @default(yes)
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TBTakeDoc {
+  id Int @id @default(autoincrement())
+  CONTNO String?
+  LockerId Int?
+  LockerFloorId Int?
+  TakeTYP TBTypeTakeDoc? @relation(fields: [TakeType], references: [id])
+  TakeType Int?
+  ReqTakeDT DateTime?
+  PersonTake Int?
+  PersonGive Int?
+  PersonVerify Int?
+  TakeStatus TakeStatus? @relation(fields: [TakeSt], references: [id])
+  TakeSt Int?
+  TakeDT DateTime?
+  ReturnSt ReReturnSt? @default(no)
+  ReturnDT DateTime?
+  PersonReturn Int?
+  PerKeepReturn Int?
+  DocImgLink String?
+  Note String?
+  UserZone Int?
+  Branch Int?
+  TypeLoans String?
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TBBranch {
+  id Int @id @default(autoincrement())
+  idContract Int?
+  NameBranch String?
+  NickNameBranch String?
+  Zone Int?
+  BranchActive active @default(no)
+  Province String?
+  BranchName String?
+  Lat String?
+  Lon String?
+  PhoneNo String?
+  LineId String?
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TBTypeTakeDoc {
+  id Int @id @default(autoincrement())
+  name_th String?
+  name_eng String?
+  ZoneActive String?
+  TAKEDOC TBTakeDoc[]
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DocStatus {
+  id Int @id @default(autoincrement())
+  name_th String?
+  name_eng String?
+  ZoneActive String?
+  CONT CotractsLocker[]
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TakeStatus {
+  id Int @id @default(autoincrement())
+  name_th String?
+  name_eng String?
+  ZoneActive String?
+  TakeDoc TBTakeDoc[]
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model apikeys {
+  id Int @id @default(autoincrement())
+  ApiKey String?
+  Apibcrypted String?
+  User users? @relation(fields: [UserInsert], references: [id])
+  UserInsert Int?
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model producttypes {
+  id Int @id @default(autoincrement())
+  Name_TH String?
+  Name_EN String?
+  ZoneActive String?
+  Locker Lockers[]
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model colors {
+  id Int @id @default(autoincrement())
+  name_th String?
+  name_eng String?
+  Actives String?
+  Locker Lockers[]
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// enum CONTST {
+
+// }
+
+enum ReReturnSt {
+  yes
+  no
+}
+
+enum active {
+  yes
+  no
+}
+
+enum bookActive {
+  yes
+  no
+}
